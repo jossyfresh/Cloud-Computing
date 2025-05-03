@@ -1,37 +1,51 @@
 /**
- * Content moderation service using OpenAI's Moderation API
+ * Content moderation service using TensorFlow.js toxicity model
  */
 
-import OpenAI from 'openai';
+import * as tf from '@tensorflow/tfjs-node';
+import toxicity from '@tensorflow-models/toxicity';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+let modelPromise = null;
+const THRESHOLD = 0.9; // Confidence threshold for predictions
 
 export class ModerationService {
   /**
-   * Moderates content using OpenAI's Moderation API
+   * Load the toxicity model if not already loaded
+   */
+  static async loadModel() {
+    if (!modelPromise) {
+      modelPromise = toxicity.load(THRESHOLD);
+    }
+    return modelPromise;
+  }
+
+  /**
+   * Moderates content using the toxicity ML model
    * @param {string} text - Content to moderate
    * @returns {Promise<Object>} Moderation result
    */
   static async moderateContent(text) {
     try {
-      const response = await openai.moderations.create({ input: text });
-      const result = response.results[0];
+      const model = await this.loadModel();
+      const predictions = await model.classify([text]);
 
-      if (result.flagged) {
-        // Find the categories that were flagged
-        const flaggedCategories = Object.entries(result.categories)
-          .filter(([_, value]) => value)
-          .map(([category]) => category);
+      const flaggedCategories = predictions
+        .filter(p => p.results[0].match)
+        .map(p => p.label);
 
+      const categoryScores = predictions.reduce((acc, curr) => {
+        acc[curr.label] = curr.results[0].probabilities[1]; // Score for toxicity
+        return acc;
+      }, {});
+
+      if (flaggedCategories.length > 0) {
         return {
           flagged: true,
           reason: `Content flagged for: ${flaggedCategories.join(', ')}`,
-          severity: this.calculateSeverity(result.category_scores),
-          confidence: Math.max(...Object.values(result.category_scores)),
-          categories: result.categories,
-          categoryScores: result.category_scores
+          severity: this.calculateSeverity(categoryScores),
+          confidence: Math.max(...Object.values(categoryScores)),
+          categories: Object.fromEntries(flaggedCategories.map(c => [c, true])),
+          categoryScores
         };
       }
 
@@ -39,22 +53,16 @@ export class ModerationService {
         flagged: false,
         reason: null,
         severity: 'low',
-        confidence: 1 - Math.max(...Object.values(result.category_scores)),
-        categories: result.categories,
-        categoryScores: result.category_scores
+        confidence: 1 - Math.max(...Object.values(categoryScores)),
+        categories: Object.fromEntries(predictions.map(p => [p.label, false])),
+        categoryScores
       };
     } catch (error) {
-      console.error('OpenAI Moderation API Error:', error);
-      // Fallback to basic word filtering if API fails
+      console.error('ML Moderation Error:', error);
       return this.basicModeration(text);
     }
   }
 
-  /**
-   * Calculate severity based on category scores
-   * @param {Object} scores - Category scores from OpenAI
-   * @returns {string} Severity level
-   */
   static calculateSeverity(scores) {
     const maxScore = Math.max(...Object.values(scores));
     if (maxScore > 0.8) return 'high';
@@ -62,11 +70,6 @@ export class ModerationService {
     return 'low';
   }
 
-  /**
-   * Basic fallback moderation using word filtering
-   * @param {string} text - Content to moderate
-   * @returns {Object} Moderation result
-   */
   static basicModeration(text) {
     const OFFENSIVE_WORDS = ['hate', 'stupid', 'kill', 'idiot'];
     const lowerText = text.toLowerCase();
@@ -78,7 +81,7 @@ export class ModerationService {
         reason: `Contains offensive word(s): ${foundWords.join(', ')}`,
         severity: 'high',
         confidence: 0.95,
-        categories: { hate: foundWords.length > 0 },
+        categories: { hate: true },
         categoryScores: { hate: 0.95 }
       };
     }

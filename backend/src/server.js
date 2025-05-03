@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3002; // Using 3001 since Next.js typically uses 3000
 
 // Connect to MongoDB
-DbService.connect().catch(console.error);
+// DbService.connect().catch(console.error);
 
 // Middleware
 app.use(cors());
