@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import Auth from '@/components/Auth'
 import ContentForm from '@/components/ContentForm'
@@ -17,6 +18,7 @@ export default function Home() {
   const [userMetrics, setUserMetrics] = useState<UserPostMetrics | null>(null)
   const [fetchingPosts, setFetchingPosts] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const router = useRouter()
 
   const loadPosts = async () => {
     try {
@@ -104,11 +106,43 @@ export default function Home() {
                   Posts today: {userMetrics.post_count_last_hour}/10
                 </div>
               )}
+              <Link
+                href="/posts"
+                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50"
+              >
+                <svg 
+                  className="mr-2 w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" 
+                  />
+                </svg>
+                My Posts
+              </Link>
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg transition-all duration-200 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
                 >
+                  <svg 
+                    className="mr-2 w-5 h-5" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" 
+                    />
+                  </svg>
                   Admin Dashboard
                 </Link>
               )}
