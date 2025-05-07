@@ -3,7 +3,6 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { moderationRouter } from './routes/moderation.js';
-import { postRouter } from './routes/posts.js';
 // import { DbService } from './services/dbService.js';
 
 const app = express();
@@ -19,7 +18,6 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api', moderationRouter);
-app.use('/api', postRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
