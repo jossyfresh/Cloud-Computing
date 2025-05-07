@@ -1,27 +1,32 @@
 import React from 'react';
-import './globals.css';
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { AuthProvider } from '@/context/AuthContext'
+import './globals.css'
+import type { Metadata } from 'next'
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { Inter } from 'next/font/google'
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Content Moderation System',
-  description: 'AI-powered content moderation system for forums and comments',
-};
+  title: 'ContentGuard | Smart Content Moderation',
+  description: 'AI-powered content moderation system for your platform',
+  icons: {
+    icon: '/favicon.ico',
+  },
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <main className="min-h-screen bg-gray-50">
-          {children}
-        </main>
+      <ToastContainer />
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
-  );
+  )
 }
